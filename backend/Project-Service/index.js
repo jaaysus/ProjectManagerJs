@@ -15,8 +15,12 @@ mongoose.connect(url+project_DB)
 .catch((error)=>console.error('Error connecting to mongodb',error));
 const db=mongoose.connection;
 
+console.log(project_DB);
+const CategoriesRoutes=require('./Routes/Category');
+app.use('/categories',CategoriesRoutes);
+
 const ProjectsRoutes=require('./Routes/Project');
-app.use('/',ProjectsRoutes);
+app.use('/projects',ProjectsRoutes);
 
 app.listen(port,()=>{
     console.log(`The server now executing on port ${port}`);
