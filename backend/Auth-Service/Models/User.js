@@ -6,10 +6,10 @@ const UserSchema = new mongoose.Schema({
   email: { type: String, required: true, unique: true },
   password: { type: String, required: true },
   role: { type: String, enum: ['admin', 'member', 'guest'], default: 'member' },
-  blocked: { type: Boolean, default: false }, // Add blocked field
+  blocked: { type: Boolean, default: false }, 
 });
 
-// Hash password before saving
+
 UserSchema.pre('save', async function (next) {
   if (!this.isModified('password')) return next();
   this.password = await bcrypt.hash(this.password, 10);
