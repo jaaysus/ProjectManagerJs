@@ -1,10 +1,9 @@
 const request = require('supertest');
 const mongoose = require('mongoose');
-const app = require('../index'); 
+const app = require('../index');
 const User = require('../Models/User');
 const jwt = require('jsonwebtoken');
 require('dotenv').config();
-
 
 const users = [
   { username: 'Giovanni Rossi', email: 'giovanni.rossi@example.com', password: 'password123', role: 'admin' },
@@ -12,19 +11,14 @@ const users = [
   { username: 'Luca Verdi', email: 'luca.verdi@example.com', password: 'password123', role: 'guest' }
 ];
 
-
 const createToken = (user) => {
   return jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: process.env.JWT_EXPIRES_IN });
 };
 
 beforeAll(async () => {
   await mongoose.connect(process.env.MONGO_URI);
-  for (const user of users) {
-    const existingUser = await User.findOne({ email: user.email });
-    if (!existingUser) {
-      await User.create(user);
-    }
-  }
+  await User.deleteMany({});
+  await User.insertMany(users);
 });
 
 afterAll(async () => {
@@ -134,7 +128,7 @@ describe('User Routes', () => {
   describe('PUT /api/users/:id', () => {
     it('should allow user to update their own profile', async () => {
       const token = createToken(memberUser);
-      const updatedData = { username: 'Nome Aggiornato', email: 'aggiornato.email@example.com' };
+      const updatedData = { username: 'Updated Name', email: 'updated.email@example.com' };
 
       const response = await request(app)
         .put(`/api/users/${memberUser._id}`)
@@ -143,11 +137,12 @@ describe('User Routes', () => {
         .expect(200);
 
       expect(response.body.username).toBe(updatedData.username);
+      expect(response.body.email).toBe(updatedData.email);
     });
 
     it('should allow admin to update any user profile', async () => {
       const token = createToken(adminUser);
-      const updatedData = { username: 'Admin Aggiornato', email: 'admin.aggiornato@example.com' };
+      const updatedData = { username: 'Admin Updated', email: 'admin.updated@example.com' };
 
       const response = await request(app)
         .put(`/api/users/${memberUser._id}`)
@@ -156,40 +151,17 @@ describe('User Routes', () => {
         .expect(200);
 
       expect(response.body.username).toBe(updatedData.username);
+      expect(response.body.email).toBe(updatedData.email);
     });
 
     it('should deny non-admin from updating another user profile', async () => {
       const token = createToken(guestUser);
-      const updatedData = { username: 'Aggiornato Ospite', email: 'ospite.aggiornato@example.com' };
+      const updatedData = { username: 'Updated Guest', email: 'guest.updated@example.com' };
 
       const response = await request(app)
         .put(`/api/users/${adminUser._id}`)
         .set('Authorization', `Bearer ${token}`)
         .send(updatedData)
-        .expect(403);
-
-      expect(response.body.error).toBe('Access denied');
-    });
-  });
-
-  describe('DELETE /api/users/:id', () => {
-    it('should allow admin to delete a user', async () => {
-      const token = createToken(adminUser);
-
-      const response = await request(app)
-        .delete(`/api/users/${memberUser._id}`)
-        .set('Authorization', `Bearer ${token}`)
-        .expect(200);
-
-      expect(response.body.message).toBe('User deleted successfully');
-    });
-
-    it('should deny non-admin from deleting a user', async () => {
-      const token = createToken(guestUser);
-
-      const response = await request(app)
-        .delete(`/api/users/${memberUser._id}`)
-        .set('Authorization', `Bearer ${token}`)
         .expect(403);
 
       expect(response.body.error).toBe('Access denied');
@@ -262,6 +234,30 @@ describe('User Routes', () => {
 
       const response = await request(app)
         .get('/api/users/search?name=Giovanni')
+        .set('Authorization', `Bearer ${token}`)
+        .expect(403);
+
+      expect(response.body.error).toBe('Access denied');
+    });
+  });
+
+  describe('DELETE /api/users/:id', () => {
+    it('should allow admin to delete a user', async () => {
+      const token = createToken(adminUser);
+
+      const response = await request(app)
+        .delete(`/api/users/${memberUser._id}`)
+        .set('Authorization', `Bearer ${token}`)
+        .expect(200);
+
+      expect(response.body.message).toBe('User deleted successfully');
+    });
+
+    it('should deny non-admin from deleting a user', async () => {
+      const token = createToken(guestUser);
+
+      const response = await request(app)
+        .delete(`/api/users/${memberUser._id}`)
         .set('Authorization', `Bearer ${token}`)
         .expect(403);
 

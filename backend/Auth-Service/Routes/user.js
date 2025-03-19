@@ -1,6 +1,7 @@
 const express = require('express');
 const User = require('../Models/User');
 const jwt = require('jsonwebtoken');
+const bcrypt = require('bcrypt');
 const router = express.Router();
 
 const verifyToken = (req, res, next) => {
@@ -14,7 +15,6 @@ const verifyToken = (req, res, next) => {
   });
 };
 
-
 router.get('/', verifyToken, async (req, res) => {
   if (req.user.role !== 'admin') {
     return res.status(403).json({ error: 'Access denied' });
@@ -22,7 +22,6 @@ router.get('/', verifyToken, async (req, res) => {
   const users = await User.find().select('-password');
   res.status(200).json(users);
 });
-
 
 router.get('/:id', verifyToken, async (req, res) => {
   if (req.user.role !== 'admin' && req.user.id !== req.params.id) {
@@ -32,7 +31,6 @@ router.get('/:id', verifyToken, async (req, res) => {
   if (!user) return res.status(404).json({ error: 'User not found' });
   res.status(200).json(user);
 });
-
 
 router.post('/create', verifyToken, async (req, res) => {
   if (req.user.role !== 'admin') {
@@ -44,18 +42,22 @@ router.post('/create', verifyToken, async (req, res) => {
   res.status(201).json({ message: 'User created successfully' });
 });
 
-
 router.put('/:id', verifyToken, async (req, res) => {
   if (req.user.role !== 'admin' && req.user.id !== req.params.id) {
     return res.status(403).json({ error: 'Access denied' });
   }
 
-  
   const { username, email, password } = req.body;
+
+  const updatedData = { username, email };
+  if (password) {
+    const salt = await bcrypt.genSalt(10);
+    updatedData.password = await bcrypt.hash(password, salt);
+  }
 
   const updatedUser = await User.findByIdAndUpdate(
     req.params.id,
-    { username, email, password },  
+    updatedData,
     { new: true }
   ).select('-password');
 
@@ -63,9 +65,8 @@ router.put('/:id', verifyToken, async (req, res) => {
   res.status(200).json(updatedUser);
 });
 
-
 router.delete('/:id', verifyToken, async (req, res) => {
-  if (req.user.role !== 'admin' && req.user.id !== req.params.id) {
+  if (req.user.role !== 'admin') {
     return res.status(403).json({ error: 'Access denied' });
   }
 
@@ -74,42 +75,14 @@ router.delete('/:id', verifyToken, async (req, res) => {
   res.status(200).json({ message: 'User deleted successfully' });
 });
 
-
-router.put('/block/:id', verifyToken, async (req, res) => {
-  if (req.user.role !== 'admin') {
-    return res.status(403).json({ error: 'Access denied' });
-  }
-  const user = await User.findById(req.params.id);
-  if (!user) return res.status(404).json({ error: 'User not found' });
-  user.blocked = true;
-  await user.save();
-  res.status(200).json({ message: 'User blocked successfully' });
-});
-
-
 router.put('/unblock/:id', verifyToken, async (req, res) => {
   if (req.user.role !== 'admin') {
     return res.status(403).json({ error: 'Access denied' });
   }
-  const user = await User.findById(req.params.id);
+
+  const user = await User.findByIdAndUpdate(req.params.id, { blocked: false });
   if (!user) return res.status(404).json({ error: 'User not found' });
-  user.blocked = false;
-  await user.save();
   res.status(200).json({ message: 'User unblocked successfully' });
-});
-
-
-router.get('/search', verifyToken, async (req, res) => {
-  const { name, email, role } = req.query;
-  let query = {};
-
-  if (name) query.username = { $regex: name, $options: 'i' }; 
-  if (email) query.email = { $regex: email, $options: 'i' }; 
-  if (role) query.role = role;
-
-  
-  const users = await User.find(query).select('-password');
-  res.status(200).json(users);
 });
 
 module.exports = router;
