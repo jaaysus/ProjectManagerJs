@@ -1,4 +1,4 @@
-const express = require('express');
+/*const express = require('express');
 const User = require('../Models/User');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
@@ -85,4 +85,4 @@ router.put('/unblock/:id', verifyToken, async (req, res) => {
   res.status(200).json({ message: 'User unblocked successfully' });
 });
 
-module.exports = router;
+module.exports = router;*/
