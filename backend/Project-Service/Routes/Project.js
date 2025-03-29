@@ -23,7 +23,7 @@ router.post('/add',(req,res)=>{
         newProject.save();
         res.json(newProject);
     }catch(error){
-        res.status(505).json({message:'There was an error saving the new project',error:error});
+        res.status(505).json({message:'There was an error saving the new project'});
     }
 });
 
