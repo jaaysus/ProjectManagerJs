@@ -3,12 +3,14 @@ const router = express.Router();
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const User = require("../Models/User");
-const verifyToken = require("./Middleware/verifyToken");
+const verifyToken = require("../Middleware/verifyToken");
+require('dotenv').config();
+
 
 // 1- Inscription d'un utilisateur
 router.post("/register", async (req, res) => {
-    const { id, name, email, password } = req.body;
-    if (!id || !name || !email || !password) {
+    const { username, email, password } = req.body;
+    if ( !username || !email || !password) {
         return res.status(400).json({ message: "Tous les champs sont obligatoires" });
     }
     const existingUser = await User.findOne({ email });
@@ -18,7 +20,7 @@ router.post("/register", async (req, res) => {
 
     try {
         const hashedPassword = await bcrypt.hash(password, 10);
-        const newUser = new User({ id, name, email, password: hashedPassword });
+        const newUser = new User({ username, email, password: hashedPassword });
         await newUser.save();
         res.status(201).json({ message: "Utilisateur créé avec succès !" });
     } catch (err) {
@@ -50,69 +52,38 @@ router.get("/profile", verifyToken(), async (req, res) => {
     }
 });
 
-//4-Creation d'un utilisateur par l'admin
-router.post("/admin/create", verifyToken("admin"), async (req, res) => {
-  const { name, email, password, role } = req.body;
-  if (!name || !email || !password || !role) {
-      return res.status(400).json({ message: "Tous les champs sont obligatoires" });
-  }
-  const validRoles = ["admin", "membre", "invité"];
-  if (!validRoles.includes(role)) {
-      return res.status(400).json({ message: "Rôle invalide" });
-  }
-try {
-    const existingUser = await User.findOne({ email });
-      if (existingUser) {
-          return res.status(400).json({ message: "Un utilisateur avec cet email existe déjà" });
-      }
-      const hashedPassword = await bcrypt.hash(password, 10);
-      const newUser = new User({name,email,password: hashedPassword,role});
-      await newUser.save();
-     res.status(201).json({ message: "Utilisateur créé avec succès" });
-  } catch (err) {
-      res.status(500).json({ error: err.message });
-  }
-});
-
-//5-Mettre a jour
+  //4-Mettre a jour
 router.put("/update/:id", verifyToken(), async (req, res) => {
-  const { name, email, password } = req.body;
-  if (req.user.role !== "admin" && req.user.id !== req.params.id) {
+  const { username, email, password,role } = req.body;
+  if ( req.user.id !== req.params.id) {
       return res.status(403).json({ message: "Accès refusé" });
   }
 try {
-      const user = await User.findById(req.params.id);
-      if (!user) {
-          return res.status(404).json({ message: "Utilisateur non trouvé" });
-      }
-      if (name) user.name = name;
-      if (email) user.email = email;
-      if (password) user.password = await bcrypt.hash(password, 10);
-   await user.save();
-      res.status(200).json({ message: "Utilisateur mis à jour avec succès" });
+    const id=req.params.id;
+    const user=await User.updateOne({_id:id},req.body);
+      res.status(200).json({ message: "Utilisateur mis à jour avec succès" ,user:user});
   } catch (err) {
       res.status(500).json({ error: err.message });
   }
 });
  
-// 6-Supprimer un utilisateur
+// 5-Supprimer un utilisateur
 router.delete("/delete/:id", verifyToken(), async (req, res) => {
   if (req.user.role !== "admin") {
       return res.status(403).json({ message: "Accès refusé" });
   }
 try {
-      const user = await User.findById(req.params.id);
+      const user = await User.deleteOne({_id:req.params.id});
       if (!user) {
           return res.status(404).json({ message: "Utilisateur non trouvé" });
       }
-      await user.remove();
       res.status(200).json({ message: "Utilisateur supprimé avec succès" });
-  } catch (err) {
+    } catch (err) {
       res.status(500).json({ error: err.message });
   }
 });
 
-//7-Blocker un utilisateur
+//6-Blocker un utilisateur
 router.put("/block/:id", verifyToken(), async (req, res) => {
   if (req.user.role !== "admin") {
       return res.status(403).json({ message: "Accès refusé" });
@@ -130,7 +101,7 @@ try {
   }
 });
 
-// 8-Débloquer un utilisateur
+// 7-Débloquer un utilisateur
 router.put("/unblock/:id", verifyToken(), async (req, res) => {
   if (req.user.role !== "admin") {
       return res.status(403).json({ message: "Accès refusé" });
@@ -148,11 +119,11 @@ router.put("/unblock/:id", verifyToken(), async (req, res) => {
   }
 });
  
-//9-Recherche par nom,email et role
+//8-Recherche par nom,email et role
 router.get("/search", verifyToken("admin"), async (req, res) => {
-  const { name, email, role } = req.query;
+  const { username, email, role } = req.query;
   let query = {};
-  if (name) query.name = { $regex: name, $options: "i" };  
+  if (username) query.name = { $regex: username, $options: "i" };  
   if (email) query.email = { $regex: email, $options: "i" };
   if (role) query.role = role;
 try {
