@@ -13,6 +13,14 @@ services:
       MONGODB_URI: mongodb://localhost:27017/Project_DB
     depends_on:
       - mongo
+  auth-service:
+    build: ./backend/auth-service
+    ports: 
+      - "3003:3003"
+    environment:
+      MONGODB_URI: mongodb://localhost:27017/User_DB
+    depends_on:
+      - mongo
   # task-service:
   #   build: 
   #     context: ./backend/task-service
