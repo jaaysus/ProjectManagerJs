@@ -3,6 +3,7 @@ const verifyToken = (req, res, next) => {
     // res.send('fff');
     const token=req.headers['authorization'];
     // res.json(token);
+    
     if (!token) {
         return res.status(403).json(token);
     }
@@ -11,6 +12,7 @@ const verifyToken = (req, res, next) => {
             return res.status(401).send('Token invalid');
         }
         req.user = decoded;
+        console.log(req.user)
         next();
     });
 };

@@ -5,6 +5,7 @@ services:
       - mongo-data:/data/db
     ports:
       - "27017:27017"
+
   project-service:
     build: ./backend/project-service
     ports: 
@@ -13,6 +14,7 @@ services:
       MONGODB_URI: mongodb://localhost:27017/Project_DB
     depends_on:
       - mongo
+
   auth-service:
     build: ./backend/auth-service
     ports: 
@@ -21,6 +23,7 @@ services:
       MONGODB_URI: mongodb://localhost:27017/User_DB
     depends_on:
       - mongo
+      
   # task-service:
   #   build: 
   #     context: ./backend/task-service
@@ -31,19 +34,19 @@ services:
   #     MONGODB_URI: mongodb://mongo:27017/Task_DB
   #   depends_on:
   #     - mongo
-  frontend:
-    build: ./frontend
-    ports:
-      - "5173:5173"
-    depends_on:
-      - project-service
+  # frontend:
+  #   build: ./frontend
+  #   ports:
+  #     - "5173:5173"
+  #   depends_on:
+  #     - project-service
       # - task-service
   nginx:
     build: ./nginx
     ports: 
       - "80:80"
     depends_on:
-      - frontend
+      # - frontend
       - project-service
       # - task-service
 volumes:

@@ -5,7 +5,7 @@ const verifyToken=require('../Middleware/verifyToken');
 
 // -->CRUD<--
 
-router.get('/',verifyToken,async(req,res)=>{
+router.get('/',async(req,res)=>{
     const projects=await Project.find();
     try{
         res.json(projects);
