@@ -39,6 +39,7 @@ router.post("/login", async (req, res) => {
     res.json({ token });
 });
 
+
 // 3- Récupérer les informations de l'utilisateur
 router.get("/profile", verifyToken(), async (req, res) => {
     try {
