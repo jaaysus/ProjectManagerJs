@@ -1,10 +1,11 @@
 const express=require('express');
 const router=express.Router();
 const Project=require('../Models/Project');
+const verifyToken=require('../Middleware/verifyToken');
 
 // -->CRUD<--
 
-router.get('/',async(req,res)=>{
+router.get('/',verifyToken,async(req,res)=>{
     const projects=await Project.find();
     try{
         res.json(projects);
@@ -13,7 +14,7 @@ router.get('/',async(req,res)=>{
     }
 });
 
-router.post('/add',(req,res)=>{
+router.post('/add',verifyToken,(req,res)=>{
     const{name,description,startDate,endDate,category,status}=req.body;
     if(!name){
         res.send('The name field is required!');
@@ -27,7 +28,7 @@ router.post('/add',(req,res)=>{
     }
 });
 
-router.put('/:id',async(req,res)=>{
+router.put('/:id',verifyToken,async(req,res)=>{
     const id=req.params.id;
     const data=req.body;
     try{
@@ -39,7 +40,7 @@ router.put('/:id',async(req,res)=>{
     }
 });
 
-router.delete('/:id',(req,res)=>{
+router.delete('/:id',verifyToken,(req,res)=>{
     const id=req.params.id;
     try{
         const project=Project.deleteOne({_id:id});
@@ -50,7 +51,7 @@ router.delete('/:id',(req,res)=>{
 
 // -->Filtrage<--
 
-router.post('/filter',async(req,res)=>{
+router.post('/filter',verifyToken,async(req,res)=>{
     const name=req.body.name;
     const startDate=req.body.startDate;
     const endDate=req.body.endDate;
