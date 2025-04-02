@@ -9,8 +9,8 @@ require('dotenv').config();
 
 // 1- Inscription d'un utilisateur
 router.post("/register", async (req, res) => {
-    const { username, email, password } = req.body;
-    if ( !username || !email || !password) {
+    const { username, email, password, role} = req.body;
+    if ( !username || !email || !password || !role) {
         return res.status(400).json({ message: "Tous les champs sont obligatoires" });
     }
     const existingUser = await User.findOne({ email });
@@ -20,7 +20,7 @@ router.post("/register", async (req, res) => {
 
     try {
         const hashedPassword = await bcrypt.hash(password, 10);
-        const newUser = new User({ username, email, password: hashedPassword });
+        const newUser = new User({ username, email,role, password: hashedPassword });
         await newUser.save();
         res.status(201).json({ message: "Utilisateur créé avec succès !" });
     } catch (err) {
@@ -124,11 +124,13 @@ router.put("/unblock/:id", verifyToken(), async (req, res) => {
 router.get("/search", verifyToken("admin"), async (req, res) => {
   const { username, email, role } = req.query;
   let query = {};
-  if (username) query.name = { $regex: username, $options: "i" };  
+  if (username) query.username = { $regex: username, $options: "i" };  
   if (email) query.email = { $regex: email, $options: "i" };
   if (role) query.role = role;
 try {
-      const users = await User.find(query);  
+
+    const users = await User.find(query);
+    console.log("Tous les utilisateurs :", users);  
       res.status(200).json(users);
   } catch (err) {
       res.status(500).json({ message: "Erreur de recherche" });

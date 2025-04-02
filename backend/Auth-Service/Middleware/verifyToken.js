@@ -2,8 +2,9 @@ const jwt = require('jsonwebtoken');
 const User = require('../Models/User');
 const verifyToken = (role = null) => {
   return async (req, res, next) => {
+
     const token = req.headers['authorization'];
-//fixed token for front end
+
     if (!token) {
       return res.status(403).send('Le token est obligatoire pour l\'authentification');
     }
