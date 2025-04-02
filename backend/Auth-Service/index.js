@@ -1,5 +1,11 @@
 const express = require('express');
 const app = express();
+
+//allowed cors for front end
+const cors = require("cors");
+app.use(cors());
+
+
 const dotenv = require('dotenv');
 const mongoose = require('mongoose');
 app.use(express.json());
